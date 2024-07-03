@@ -1,0 +1,320 @@
+import pandas as pd
+import plotly.graph_objects as go
+import os
+from datetime import datetime
+
+# Define the list of filenames for time series line plots with specific titles
+ts_filenames = [
+    ("G8140003_Discharge_TS.csv", "G8140003"),
+    ("G8140011_Discharge_TS.csv", "G8140011"),
+    ("G8140038_Discharge_TS.csv", "G8140038"),
+    ("G8140040_Discharge_TS.csv", "G8140040"),
+    ("G8140042_Discharge_TS.csv", "G8140042"),
+    ("G8140063_Discharge_TS.csv", "G8140063"),
+    ("G8140067_Discharge_TS.csv", "G8140067"),
+    ("G8140068_Discharge_TS.csv", "G8140068"),
+    ("G8140098_Discharge_TS.csv", "G8140098"),
+    ("G8140157_Discharge_TS.csv", "G8140157"),
+    ("G8140161_Discharge_TS.csv", "G8140161"),
+    ("G8140164_Discharge_TS.csv", "G8140164"),
+    ("G8140205_Discharge_TS.csv", "G8140205"),
+    ("G8140325_Discharge_TS.csv", "G8140325"),
+    ("G8140346_Discharge_TS.csv", "G8140346"),
+    ("G8140347_Discharge_TS.csv", "G8140347"),
+    ("G8140356_Discharge_TS.csv", "G8140356"),
+    ("G8140357_Discharge_TS.csv", "G8140357"),
+    ("G8140380_Discharge_TS.csv", "G8140380"),
+    ("G8140385_Discharge_TS.csv", "G8140385"),
+    ("G8140536_Discharge_TS.csv", "G8140536"),
+    ("G8140538_Discharge_TS.csv", "G8140538"),
+    ("G8145132_Discharge_TS.csv", "G8145132"),
+    ("G8145370_Discharge_TS.csv", "G8145370"),
+    ("G8145393_Discharge_TS.csv", "G8145393"),
+    ("G8145418_Discharge_TS.csv", "G8145418"),
+    ("G8145670_Discharge_TS.csv", "G8145670"),
+    ("G8145694_Discharge_TS.csv", "G8145694"),
+    ("G8145747_Discharge_TS.csv", "G8145747"),
+    ("G8145749_Discharge_TS.csv", "G8145749"),
+    ("G8140003_Discharge_FV.csv", "G8140003"),
+    ("G8140011_Discharge_FV.csv", "G8140011"),
+    ("G8140038_Discharge_FV.csv", "G8140038"),
+    ("G8140040_Discharge_FV.csv", "G8140040"),
+    ("G8140042_Discharge_FV.csv", "G8140042"),
+    ("G8140063_Discharge_FV.csv", "G8140063"),
+    ("G8140067_Discharge_FV.csv", "G8140067"),
+    ("G8140068_Discharge_FV.csv", "G8140068"),
+    ("G8140098_Discharge_FV.csv", "G8140098"),
+    ("G8140157_Discharge_FV.csv", "G8140157"),
+    ("G8140161_Discharge_FV.csv", "G8140161"),
+    ("G8140164_Discharge_FV.csv", "G8140164"),
+    ("G8140205_Discharge_FV.csv", "G8140205"),
+    ("G8140325_Discharge_FV.csv", "G8140325"),
+    ("G8140346_Discharge_FV.csv", "G8140346"),
+    ("G8140347_Discharge_FV.csv", "G8140347"),
+    ("G8140356_Discharge_FV.csv", "G8140356"),
+    ("G8140357_Discharge_FV.csv", "G8140357"),
+    ("G8140380_Discharge_FV.csv", "G8140380"),
+    ("G8140385_Discharge_FV.csv", "G8140385"),
+    ("G8140536_Discharge_FV.csv", "G8140536"),
+    ("G8140538_Discharge_FV.csv", "G8140538"),
+    ("G8145132_Discharge_FV.csv", "G8145132"),
+    ("G8145370_Discharge_FV.csv", "G8145370"),
+    ("G8145393_Discharge_FV.csv", "G8145393"),
+    ("G8145418_Discharge_FV.csv", "G8145418"),
+    ("G8145670_Discharge_FV.csv", "G8145670"),
+    ("G8145694_Discharge_FV.csv", "G8145694"),
+    ("G8145747_Discharge_FV.csv", "G8145747"),
+    ("G8145749_Discharge_FV.csv", "G8145749")
+]
+
+# Define major and minor ticks for streamflow axis
+major_ticks = [10, 100, 1000, 10000]
+minor_ticks = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000, 10000]
+
+# Function to fetch rainfall data
+def fetch_rainfall_data(lat, lon, start_date, end_date):
+    data_url = f'https://www.longpaddock.qld.gov.au/cgi-bin/silo/DataDrillDataset.php?lat={lat}&lon={lon}&format=csv&start={start_date.strftime("%Y%m%d")}&finish={end_date.strftime("%Y%m%d")}&username=noemail@net.com&password=BoMonly&comment=rc'
+    try:
+        rainfall_data = pd.read_csv(data_url)
+        rainfall_data['YYYY-MM-DD'] = pd.to_datetime(rainfall_data['YYYY-MM-DD'])
+        rainfall_data.set_index('YYYY-MM-DD', inplace=True)
+        # Calculate annual sum
+        annual_rainfall = rainfall_data['daily_rain'].resample('YE').sum().reset_index()
+        return annual_rainfall
+    except Exception as e:
+        print(f"Error loading data for lat: {lat}, lon: {lon} - {e}")
+        return pd.DataFrame()
+
+# Read bore locations
+bore_locations = pd.read_csv('locations.csv')
+
+# Define the start and end dates for the period to be plotted
+start_date_input = "1950-01-01"
+end_date_input = "2024-12-01"
+start_date = datetime.strptime(start_date_input, '%Y-%m-%d')
+end_date = datetime.strptime(end_date_input, '%Y-%m-%d')
+
+# Function to plot the data
+def plot_data(df_ts, annual_rainfall, title):
+    fig = go.Figure()
+
+    # Add the rainfall data as primary axis
+    if not annual_rainfall.empty:
+        fig.add_trace(go.Bar(x=annual_rainfall['YYYY-MM-DD'], y=annual_rainfall['daily_rain'], name='Annual Total Rainfall', marker_color='lightblue', opacity=0.4, yaxis='y'))
+
+    # Filter out values less than 1 m³/s
+    df_ts = df_ts[df_ts['Value'] >= 1]
+
+    # Add the streamflow time series on secondary axis
+    if not df_ts.empty:
+        fig.add_trace(go.Scatter(x=df_ts['DateTime'], y=df_ts['Value'], mode='lines', name='Streamflow Time Series', line=dict(color='blue'), yaxis='y2'))
+
+    # Update layout for multiple y-axes with repositioning
+    fig.update_layout(
+        title=dict(text=f'Streamflow and Rainfall for {title}', x=0.5, xanchor='center', font=dict(size=24, color='black', family='Arial Black')),
+        xaxis_title='Date',
+        yaxis=dict(
+            title='Annual Rainfall (mm)', 
+            titlefont=dict(color='lightblue', size=18, family='Arial Black'), 
+            tickfont=dict(color='lightblue'), 
+            side='right', 
+            showgrid=True, 
+            gridwidth=0.5, 
+            gridcolor='LightGrey'
+        ),
+        yaxis2=dict(
+            title='Streamflow (m³/s)', 
+            type='log', 
+            titlefont=dict(color='blue', size=18, family='Arial Black'), 
+            tickfont=dict(color='blue'), 
+            anchor='free', 
+            overlaying='y', 
+            side='left', 
+            showline=True, 
+            linewidth=2, 
+            linecolor='blue',
+            showgrid=False,  # Disable grid lines for the streamflow axis
+            tickvals=major_ticks,  # Major ticks
+            tickformat=".0f"  # Ensure the format is fixed-point with no decimals
+        ),
+        width=1200,
+        height=600,
+        legend=dict(x=0.01, y=0.99, bgcolor='rgba(193, 223, 222, 0.331)', bordercolor='rgba(0,0,0,0)'),
+        plot_bgcolor='white',
+        paper_bgcolor='white',
+        margin=dict(l=150, r=150, t=80, b=80),
+        shapes=[
+            dict(
+                type='rect',
+                xref='paper',
+                yref='paper',
+                x0=0,
+                y0=0,
+                x1=1,
+                y1=1,
+                line=dict(
+                    color='black',
+                    width=2
+                )
+            )
+        ]
+    )
+
+    # Add minor grid lines manually
+    for tick in minor_ticks:
+        fig.add_shape(
+            dict(
+                type="line",
+                x0=0,
+                x1=1,
+                xref='paper',
+                y0=tick,
+                y1=tick,
+                yref='y2',
+                line=dict(
+                    color='LightGrey',
+                    width=0.5
+                )
+            )
+        )
+
+    # Update title and axis font size, remove inside axis lines
+    fig.update_layout(
+        title=dict(font=dict(size=24, color='black', family='Arial Black')),
+        xaxis=dict(tickfont=dict(size=16), showgrid=True, zeroline=True),
+        yaxis=dict(titlefont=dict(size=18, family='Arial Black'), tickfont=dict(size=16), showgrid=True, zeroline=True),
+        yaxis2=dict(titlefont=dict(size=18, family='Arial Black'), tickfont=dict(size=16), showgrid=False, zeroline=True)
+    )
+
+    # Show the plot
+    fig.show()
+
+# Read each file and plot the data
+for filename, title in ts_filenames:
+    ts_bore = os.path.basename(filename).split('_')[0]
+    filepath = os.path.join("output/downloads", filename)
+
+    if os.path.exists(filepath):
+        # Read the CSV file for the time series data
+        df_ts = pd.read_csv(filepath, parse_dates=['DateTime'])
+
+        # Filter the data by the selected date range
+        df_ts_filtered = df_ts[(df_ts['DateTime'] >= start_date) & (df_ts['DateTime'] <= end_date)]
+
+        # Get bore location for rainfall data
+        bore_location = bore_locations[bore_locations['location'] == ts_bore]
+        if bore_location.empty:
+            print(f"No location data found for bore {ts_bore}")
+            continue
+
+        bore_location = bore_location.iloc[0]
+        lat, lon = bore_location['Latitude'], bore_location['Longitude']
+
+        # Fetch rainfall data
+        annual_rainfall = fetch_rainfall_data(lat, lon, start_date, end_date)
+
+        # Plot the data
+        plot_data(df_ts_filtered, annual_rainfall, title)
+
+# Combined plot for specific sites
+combined_sites = ['G8140067', 'G8140098', 'G8140536', 'G8140042']
+
+# Load data for combined plot
+combined_data = {site: pd.read_csv(os.path.join("output/downloads", f"{site}_Discharge_TS.csv"), parse_dates=['DateTime']) for site in combined_sites}
+
+# Plot combined sites
+fig = go.Figure()
+
+# Add rainfall data (using the coordinates of the first site for simplicity)
+lat, lon = bore_locations[bore_locations['location'] == combined_sites[0]][['Latitude', 'Longitude']].iloc[0]
+combined_rainfall = fetch_rainfall_data(lat, lon, start_date, end_date)
+if not combined_rainfall.empty:
+    fig.add_trace(go.Bar(x=combined_rainfall['YYYY-MM-DD'], y=combined_rainfall['daily_rain'], name='Annual Total Rainfall', marker_color='lightblue', yaxis='y', opacity=0.4))
+
+colors = ['blue', 'red', 'green', 'orange']
+for i, site in enumerate(combined_sites):
+    df_ts = combined_data[site]
+    df_ts_filtered = df_ts[(df_ts['DateTime'] >= start_date) & (df_ts['DateTime'] <= end_date)]
+    df_ts_filtered = df_ts_filtered[df_ts_filtered['Value'] >= 1]  # Filter out values less than 1 m³/s
+    fig.add_trace(go.Scatter(x=df_ts_filtered['DateTime'], y=df_ts_filtered['Value'], mode='lines', name=site, line=dict(color=colors[i]), yaxis='y2'))
+
+
+# Update layout for combined plot
+fig.update_layout(
+    title=dict(text='Combined Streamflow and Rainfall for Selected Sites', x=0.5, xanchor='center', font=dict(size=24, color='black', family='Arial Black')),
+    xaxis_title='Date',
+    yaxis=dict(
+        title='Annual Rainfall (mm)', 
+        titlefont=dict(color='lightblue', size=18, family='Arial Black'), 
+        tickfont=dict(color='lightblue'), 
+        side='right', 
+        showgrid=True, 
+        gridwidth=0.5, 
+        gridcolor='LightGrey'
+    ),
+    yaxis2=dict(
+        title='Streamflow (m³/s)', 
+        type='log', 
+        titlefont=dict(color='blue', size=18, family='Arial Black'), 
+        tickfont=dict(color='blue'), 
+        anchor='free', 
+        overlaying='y', 
+        side='left', 
+        showline=True, 
+        linewidth=2, 
+        linecolor='blue',
+        showgrid=False,  # Disable grid lines for the streamflow axis
+        tickvals=major_ticks,  # Major ticks
+        tickformat=".0f"  # Ensure the format is fixed-point with no decimals
+    ),
+    width=1200,
+    height=600,
+    legend=dict(x=0.01, y=0.99, bgcolor='rgba(193, 223, 222, 0.331)', bordercolor='rgba(0,0,0,0)'),
+    plot_bgcolor='white',
+    paper_bgcolor='white',
+    margin=dict(l=150, r=150, t=80, b=80),
+    shapes=[
+        dict(
+            type='rect',
+            xref='paper',
+            yref='paper',
+            x0=0,
+            y0=0,
+            x1=1,
+            y1=1,
+            line=dict(
+                color='black',
+                width=2
+            )
+        )
+    ]
+)
+
+# Add minor grid lines manually for combined plot
+for tick in minor_ticks:
+    fig.add_shape(
+        dict(
+            type="line",
+            x0=0,
+            x1=1,
+            xref='paper',
+            y0=tick,
+            y1=tick,
+            yref='y2',
+            line=dict(
+                color='LightGrey',
+                width=0.5
+            )
+        )
+    )
+
+# Update title and axis font size, remove inside axis lines
+fig.update_layout(
+    title=dict(font=dict(size=24, color='black', family='Arial Black')),
+    xaxis=dict(tickfont=dict(size=16), showgrid=True, zeroline=True),
+    yaxis=dict(titlefont=dict(size=18, family='Arial Black'), tickfont=dict(size=16), showgrid=True, zeroline=True),
+    yaxis2=dict(titlefont=dict(size=18, family='Arial Black'), tickfont=dict(size=16), showgrid=False, zeroline=True)
+)
+
+# Show the combined plot
+fig.show()
