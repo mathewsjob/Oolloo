@@ -1,0 +1,405 @@
+import pandas as pd
+import plotly.graph_objects as go
+import os
+from datetime import datetime
+
+# Define the list of filenames for time series line plots with specific titles
+ts_filenames = [
+   ("RN007595_DepthBelowGround_TS.csv", "RN007595"),
+    ("RN008660_DepthBelowGround_TS.csv", "RN008660"),
+    ("RN020614_DepthBelowGround_TS.csv", "RN020614"),
+    ("RN021717_DepthBelowGround_TS.csv", "RN021717"),
+    ("RN021830_DepthBelowGround_TS.csv", "RN021830"),
+    ("RN025285_DepthBelowGround_TS.csv", "RN025285"),
+    ("RN025286_DepthBelowGround_TS.csv", "RN025286"),
+    ("RN030803_DepthBelowGround_TS.csv", "RN030803"),
+    ("RN032750_DepthBelowGround_TS.csv", "RN032750"),
+    ("RN033033_DepthBelowGround_TS.csv", "RN033033"),
+    ("RN033034_DepthBelowGround_TS.csv", "RN033034"),
+    ("RN033035_DepthBelowGround_TS.csv", "RN033035"),
+    ("RN033132_DepthBelowGround_TS.csv", "RN033132"),
+    ("RN033133_DepthBelowGround_TS.csv", "RN033133"),
+    ("RN033308_DepthBelowGround_TS.csv", "RN033308"),
+    ("RN033309_DepthBelowGround_TS.csv", "RN033309"),
+    ("RN034363_DepthBelowGround_TS.csv", "RN034363"),
+    ("RN034364_DepthBelowGround_TS.csv", "RN034364"),
+    ("RN034366_DepthBelowGround_TS.csv", "RN034366"),
+    ("RN034367_DepthBelowGround_TS.csv", "RN034367"),
+    ("RN034368_DepthBelowGround_TS.csv", "RN034368"),
+    ("RN034369_DepthBelowGround_TS.csv", "RN034369"),
+    ("RN034594_DepthBelowGround_TS.csv", "RN034594"),
+    ("RN034595_DepthBelowGround_TS.csv", "RN034595"),
+    ("RN034596_DepthBelowGround_TS.csv", "RN034596"),
+    ("RN034597_DepthBelowGround_TS.csv", "RN034597"),
+    ("RN035862_DepthBelowGround_TS.csv", "RN035862"),
+    ("RN036813_DepthBelowGround_TS.csv", "RN036813"),
+    ("RN036815_DepthBelowGround_TS.csv", "RN036815"),
+    ("RN036818_DepthBelowGround_TS.csv", "RN036818"),
+    ("RN037041_DepthBelowGround_TS.csv", "RN037041"),
+    ("RN037042_DepthBelowGround_TS.csv", "RN037042"),
+    ("RN037043_DepthBelowGround_TS.csv", "RN037043"),
+    ("RN037336_DepthBelowGround_TS.csv", "RN037336"),
+    ("RN037339_DepthBelowGround_TS.csv", "RN037339")
+]
+
+# Define the list of filenames and corresponding titles for field visits
+fv_filenames_with_titles = [
+    ("RN007595_DepthBelowGround_FV.csv", "RN007595"),
+    ("RN008660_DepthBelowGround_FV.csv", "RN008660"),
+    ("RN020614_DepthBelowGround_FV.csv", "RN020614"),
+    ("RN021717_DepthBelowGround_FV.csv", "RN021717"),
+    ("RN021830_DepthBelowGround_FV.csv", "RN021830"),
+    ("RN025285_DepthBelowGround_FV.csv", "RN025285"),
+    ("RN025286_DepthBelowGround_FV.csv", "RN025286"),
+    ("RN030803_DepthBelowGround_FV.csv", "RN030803"),
+    ("RN032750_DepthBelowGround_FV.csv", "RN032750"),
+    ("RN032751_DepthBelowGround_FV.csv", "RN032751"),
+    ("RN033033_DepthBelowGround_FV.csv", "RN033033"),
+    ("RN033034_DepthBelowGround_FV.csv", "RN033034"),
+    ("RN033035_DepthBelowGround_FV.csv", "RN033035"),
+    ("RN033039_DepthBelowGround_FV.csv", "RN033039"),
+    ("RN033132_DepthBelowGround_FV.csv", "RN033132"),
+    ("RN033133_DepthBelowGround_FV.csv", "RN033133"),
+    ("RN033308_DepthBelowGround_FV.csv", "RN033308"),
+    ("RN033309_DepthBelowGround_FV.csv", "RN033309"),
+    ("RN034363_DepthBelowGround_FV.csv", "RN034363"),
+    ("RN034364_DepthBelowGround_FV.csv", "RN034364"),
+    ("RN034366_DepthBelowGround_FV.csv", "RN034366"),
+    ("RN034367_DepthBelowGround_FV.csv", "RN034367"),
+    ("RN034368_DepthBelowGround_FV.csv", "RN034368"),
+    ("RN034369_DepthBelowGround_FV.csv", "RN034369"),
+    ("RN034594_DepthBelowGround_FV.csv", "RN034594"),
+    ("RN034595_DepthBelowGround_FV.csv", "RN034595"),
+    ("RN034596_DepthBelowGround_FV.csv", "RN034596"),
+    ("RN034597_DepthBelowGround_FV.csv", "RN034597"),
+    ("RN035861_DepthBelowGround_FV.csv", "RN035861"),
+    ("RN035862_DepthBelowGround_FV.csv", "RN035862"),
+    ("RN036813_DepthBelowGround_FV.csv", "RN036813"),
+    ("RN036814_DepthBelowGround_FV.csv", "RN036814"),
+    ("RN036815_DepthBelowGround_FV.csv", "RN036815"),
+    ("RN036816_DepthBelowGround_FV.csv", "RN036816"),
+    ("RN036818_DepthBelowGround_FV.csv", "RN036818"),
+    ("RN037041_DepthBelowGround_FV.csv", "RN037041"),
+    ("RN037042_DepthBelowGround_FV.csv", "RN037042"),
+    ("RN037043_DepthBelowGround_FV.csv", "RN037043"),
+    ("RN037336_DepthBelowGround_FV.csv", "RN037336"),
+    ("RN037337_DepthBelowGround_FV.csv", "RN037337"),
+    ("RN037338_DepthBelowGround_FV.csv", "RN037338"),
+    ("RN037339_DepthBelowGround_FV.csv", "RN037339")
+]
+
+# Convert the list of field visits to a dictionary for easy lookup
+fv_dict = {os.path.basename(fv[0]).split('_')[0]: fv for fv in fv_filenames_with_titles}
+
+# Track bores that have been plotted
+plotted_bores = set()
+
+# Function to fetch rainfall data
+def fetch_rainfall_data(lat, lon, start_date, end_date):
+    data_url = f'https://www.longpaddock.qld.gov.au/cgi-bin/silo/DataDrillDataset.php?lat={lat}&lon={lon}&format=csv&start={start_date.strftime("%Y%m%d")}&finish={end_date.strftime("%Y%m%d")}&username=noemail@net.com&password=BoMonly&comment=rc'
+    try:
+        rainfall_data = pd.read_csv(data_url)
+        rainfall_data['YYYY-MM-DD'] = pd.to_datetime(rainfall_data['YYYY-MM-DD'])
+        rainfall_data.set_index('YYYY-MM-DD', inplace=True)
+        # Calculate monthly sum
+        monthly_rainfall = rainfall_data['daily_rain'].resample('ME').sum().reset_index()
+        return monthly_rainfall
+    except Exception as e:
+        print(f"Error loading data for lat: {lat}, lon: {lon} - {e}")
+        return pd.DataFrame()
+
+# Read bore locations
+bore_locations = pd.read_csv('locations.csv')
+
+# Define the start and end dates for the period to be plotted
+start_date_input = "2019-07-01"
+end_date_input = "2024-06-30"
+start_date = datetime.strptime(start_date_input, '%Y-%m-%d')
+end_date = datetime.strptime(end_date_input, '%Y-%m-%d')
+
+# Read each file and plot the data
+for filename, title in ts_filenames:
+    ts_bore = os.path.basename(filename).split('_')[0]
+    filepath = os.path.join("output/downloads", filename)
+    
+    if os.path.exists(filepath):
+        # Read the CSV file for the time series data
+        df_ts = pd.read_csv(filepath, parse_dates=['DateTime'])
+        
+        # Filter the data by the selected date range
+        df_ts = df_ts[(df_ts['DateTime'] >= start_date) & (df_ts['DateTime'] <= end_date)]
+        
+        # Load water elevation data for the same bore
+        water_elevation_filename = filename.replace("DepthBelowGround", "WaterElevation")
+        water_elevation_filepath = os.path.join("output/downloads", water_elevation_filename)
+        if os.path.exists(water_elevation_filepath):
+            df_water_elevation = pd.read_csv(water_elevation_filepath, parse_dates=['DateTime'])
+            df_water_elevation = df_water_elevation[(df_water_elevation['DateTime'] >= start_date) & (df_water_elevation['DateTime'] <= end_date)]
+        else:
+            print(f"Water elevation data file not found for {ts_bore}")
+            df_water_elevation = pd.DataFrame()
+        
+        # Get bore location for rainfall data
+        bore_location = bore_locations[bore_locations['location'] == ts_bore]
+        if bore_location.empty:
+            print(f"No location data found for bore {ts_bore}")
+            continue
+
+        bore_location = bore_location.iloc[0]
+        lat, lon = bore_location['Latitude'], bore_location['Longitude']
+        
+        # Fetch rainfall data
+        monthly_rainfall = fetch_rainfall_data(lat, lon, start_date, end_date)
+        
+        # Check if there is a matching bore for field visit data
+        if ts_bore in fv_dict:
+            fv_filename, fv_title = fv_dict[ts_bore]
+            fv_filepath = os.path.join("output/downloads", fv_filename)
+            
+            if os.path.exists(fv_filepath):
+                # Read the CSV file for the field visit data
+                df_fv = pd.read_csv(fv_filepath, parse_dates=['DateTime'])
+                
+                # Filter the data by the selected date range
+                df_fv = df_fv[(df_fv['DateTime'] >= start_date) & (df_fv['DateTime'] <= end_date)]
+                
+                # Plot the data
+                fig = go.Figure()
+                
+                # Add the rainfall data as primary axis on the right
+                if not monthly_rainfall.empty:
+                    fig.add_trace(go.Bar(x=monthly_rainfall['YYYY-MM-DD'], y=monthly_rainfall['daily_rain'], name='Monthly Total Rainfall', marker_color='lightblue', yaxis='y', opacity=0.4))
+                    
+                # Add the water elevation time series
+                if not df_water_elevation.empty:
+                    fig.add_trace(go.Scatter(x=df_water_elevation['DateTime'], y=df_water_elevation['Value'], mode='lines', name='Water Elevation Time Series', marker_color='blue', yaxis='y3',opacity=0))
+                
+                # Add the depth below ground time series
+                fig.add_trace(go.Scatter(x=df_ts['DateTime'], y=df_ts['Value'], mode='lines', name='Depth Below Ground Time Series', line=dict(color='black'), yaxis='y2'))
+                
+                # Add the field visit data last
+                fig.add_trace(go.Scatter(x=df_fv['DateTime'], y=df_fv['Value'], mode='markers', name='Field Visits', marker=dict(size=12, color='red', line=dict(width=2, color='red')), yaxis='y2'))
+
+                # Calculate tick positions for each axis
+                def calculate_ticks(data, num_divisions=6):
+                    if data.empty:
+                        return []
+                    min_val, max_val = data.min(), data.max()
+                    return [min_val + i * (max_val - min_val) / (num_divisions - 1) for i in range(num_divisions)]
+                
+                depth_ticks = calculate_ticks(df_ts['Value'])
+                elevation_ticks = calculate_ticks(df_water_elevation['Value'])
+                rainfall_ticks = calculate_ticks(monthly_rainfall['daily_rain'])
+                
+                # Update layout for multiple y-axes with repositioning using domain
+                fig.update_layout(
+                    title=dict(text=f'Bore No: {title}', x=0.5, xanchor='center', font=dict(size=24, color='black', family='Arial Black')),
+                    xaxis_title='Date',
+                    yaxis=dict(title='Monthly Rainfall (mm)', titlefont=dict(color='lightblue', size=18, family='Arial Black'), tickfont=dict(color='lightblue'), side='right'),
+                    yaxis2=dict(title='Depth Below Ground (m)', titlefont=dict(color='black', size=18, family='Arial Black'), tickfont=dict(color='black'), side='left', overlaying='y', tickvals=depth_ticks, tickformat=".2f"),
+                    yaxis3=dict(title='Water Elevation (m AHD)', titlefont=dict(color='blue', size=18, family='Arial Black'), tickfont=dict(color='blue'), anchor='free', overlaying='y', side='left', autoshift=True, shift = -60, position=0, showline=True, tickvals=elevation_ticks, tickformat=".2f"),
+                    width=1400,
+                    height=600,
+                    legend=dict(x=0.01, y=0.99, bgcolor='rgba(193, 223, 222, 0.331)', bordercolor='rgba(0,0,0,0)'),
+                    plot_bgcolor='white',
+                    paper_bgcolor='white',
+                    margin=dict(l=150, r=150, t=80, b=80),
+                    shapes=[
+                        dict(
+                            type='rect',
+                            xref='paper',
+                            yref='paper',
+                            x0=0,
+                            y0=0,
+                            x1=1,
+                            y1=1,
+                            line=dict(
+                                color='black',
+                                width=2
+                            )
+                        )
+                    ]
+                )
+                
+                # Update title and axis font size, remove inside axis lines
+                fig.update_layout(
+                    title=dict(font=dict(size=24, color='black', family='Arial Black')),
+                    xaxis=dict(tickfont=dict(size=16), showgrid=True, zeroline=True),
+                    yaxis=dict(titlefont=dict(size=18, family='Arial Black'), tickfont=dict(size=16), showgrid=True, zeroline=True),
+                    yaxis2=dict(titlefont=dict(size=18, family='Arial Black'), tickfont=dict(size=16), showgrid=True, zeroline=True),
+                    yaxis3=dict(titlefont=dict(size=18, family='Arial Black'), tickfont=dict(size=16), showgrid=True, zeroline=True)
+                )
+                
+                # Show the plot
+                fig.show()
+
+                
+                # Mark this bore as plotted
+                plotted_bores.add(ts_bore)
+        else:
+            # Plot the data
+                fig = go.Figure()
+                
+                # Add the rainfall data as primary axis on the right
+                if not monthly_rainfall.empty:
+                    fig.add_trace(go.Bar(x=monthly_rainfall['YYYY-MM-DD'], y=monthly_rainfall['daily_rain'], name='Monthly Total Rainfall', marker_color='lightblue', yaxis='y', opacity=0.4))
+                    
+                # Add the water elevation time series
+                if not df_water_elevation.empty:
+                    fig.add_trace(go.Scatter(x=df_water_elevation['DateTime'], y=df_water_elevation['Value'], mode='lines', name='Water Elevation Time Series', marker_color='blue', yaxis='y3',opacity=0))
+                
+                # Add the depth below ground time series
+                fig.add_trace(go.Scatter(x=df_ts['DateTime'], y=df_ts['Value'], mode='lines', name='Depth Below Ground Time Series', line=dict(color='black'), yaxis='y2'))
+                
+                # Add the field visit data last
+                fig.add_trace(go.Scatter(x=df_fv['DateTime'], y=df_fv['Value'], mode='markers', name='Field Visits', marker=dict(size=12, color='red', line=dict(width=2, color='red')), yaxis='y2'))
+
+                # Calculate tick positions for each axis
+                def calculate_ticks(data, num_divisions=6):
+                    if data.empty:
+                        return []
+                    min_val, max_val = data.min(), data.max()
+                    return [min_val + i * (max_val - min_val) / (num_divisions - 1) for i in range(num_divisions)]
+                
+                depth_ticks = calculate_ticks(df_ts['Value'])
+                elevation_ticks = calculate_ticks(df_water_elevation['Value'])
+                rainfall_ticks = calculate_ticks(monthly_rainfall['daily_rain'])
+                
+                # Update layout for multiple y-axes with repositioning using domain
+                fig.update_layout(
+                    title=dict(text=f'Bore No: {title}', x=0.5, xanchor='center', font=dict(size=24, color='black', family='Arial Black')),
+                    xaxis_title='Date',
+                    yaxis=dict(title='Monthly Rainfall (mm)', titlefont=dict(color='lightblue', size=18, family='Arial Black'), tickfont=dict(color='lightblue'), side='right'),
+                    yaxis2=dict(title='Depth Below Ground (m)', titlefont=dict(color='black', size=18, family='Arial Black'), tickfont=dict(color='black'), side='left', overlaying='y', tickvals=depth_ticks, tickformat=".2f"),
+                    yaxis3=dict(title='Water Elevation (m AHD)', titlefont=dict(color='blue', size=18, family='Arial Black'), tickfont=dict(color='blue'), anchor='free', overlaying='y', side='left', autoshift=True, shift = -60, position=0, showline=True, tickvals=elevation_ticks, tickformat=".2f"),
+                    width=1400,
+                    height=600,
+                    legend=dict(x=0.01, y=0.99, bgcolor='rgba(193, 223, 222, 0.331)', bordercolor='rgba(0,0,0,0)'),
+                    plot_bgcolor='white',
+                    paper_bgcolor='white',
+                    margin=dict(l=150, r=150, t=80, b=80),
+                    shapes=[
+                        dict(
+                            type='rect',
+                            xref='paper',
+                            yref='paper',
+                            x0=0,
+                            y0=0,
+                            x1=1,
+                            y1=1,
+                            line=dict(
+                                color='black',
+                                width=2
+                            )
+                        )
+                    ]
+                )
+                
+                # Update title and axis font size, remove inside axis lines
+                fig.update_layout(
+                    title=dict(font=dict(size=24, color='black', family='Arial Black')),
+                    xaxis=dict(tickfont=dict(size=16), showgrid=True, zeroline=True),
+                    yaxis=dict(titlefont=dict(size=18, family='Arial Black'), tickfont=dict(size=16), showgrid=True, zeroline=True),
+                    yaxis2=dict(titlefont=dict(size=18, family='Arial Black'), tickfont=dict(size=16), showgrid=True, zeroline=True),
+                    yaxis3=dict(titlefont=dict(size=18, family='Arial Black'), tickfont=dict(size=16), showgrid=True, zeroline=True)
+                )
+                
+                # Show the plot
+                fig.show()
+
+
+# Plot the remaining field visit data that did not match with time series data
+for filename, title in fv_filenames_with_titles:
+    fv_bore = os.path.basename(filename).split('_')[0]
+    
+    if fv_bore not in plotted_bores:  # Ensure it was not already plotted
+        filepath = os.path.join("output/downloads", filename)
+        
+        if os.path.exists(filepath):
+            # Read the CSV file for the field visit data
+            df_fv = pd.read_csv(filepath, parse_dates=['DateTime'])
+            
+            # Filter the data by the selected date range
+            df_fv = df_fv[(df_fv['DateTime'] >= start_date) & (df_fv['DateTime'] <= end_date)]
+            
+            # Get bore location for rainfall data
+            bore_location = bore_locations[bore_locations['location'] == fv_bore]
+            if bore_location.empty:
+                print(f"No location data found for bore {fv_bore}")
+                continue
+
+            bore_location = bore_location.iloc[0]
+            lat, lon = bore_location['Latitude'], bore_location['Longitude']
+            
+            # Fetch rainfall data
+            monthly_rainfall = fetch_rainfall_data(lat, lon, start_date, end_date)
+            
+            # Plot the data
+            fig = go.Figure()
+                
+            # Add the rainfall data as primary axis on the right
+            if not monthly_rainfall.empty:
+                fig.add_trace(go.Bar(x=monthly_rainfall['YYYY-MM-DD'], y=monthly_rainfall['daily_rain'], name='Monthly Total Rainfall', marker_color='lightblue', yaxis='y', opacity=0.4))
+                    
+            # Add the water elevation time series
+            if not df_water_elevation.empty:
+                fig.add_trace(go.Scatter(x=df_water_elevation['DateTime'], y=df_water_elevation['Value'], mode='lines', name='Water Elevation Time Series', marker_color='blue', yaxis='y3',opacity=0))
+                
+            # Add the depth below ground time series
+            fig.add_trace(go.Scatter(x=df_ts['DateTime'], y=df_ts['Value'], mode='lines', name='Depth Below Ground Time Series', line=dict(color='black'), yaxis='y2'))
+                
+            # Add the field visit data last
+            fig.add_trace(go.Scatter(x=df_fv['DateTime'], y=df_fv['Value'], mode='markers', name='Field Visits', marker=dict(size=12, color='red', line=dict(width=2, color='red')), yaxis='y2'))
+
+            # Calculate tick positions for each axis
+            def calculate_ticks(data, num_divisions=6):
+                if data.empty:
+                    return []
+                min_val, max_val = data.min(), data.max()
+                return [min_val + i * (max_val - min_val) / (num_divisions - 1) for i in range(num_divisions)]
+                
+            depth_ticks = calculate_ticks(df_ts['Value'])
+            elevation_ticks = calculate_ticks(df_water_elevation['Value'])
+            rainfall_ticks = calculate_ticks(monthly_rainfall['daily_rain'])
+                
+            # Update layout for multiple y-axes with repositioning using domain
+            fig.update_layout(
+                title=dict(text=f'Bore No: {title}', x=0.5, xanchor='center', font=dict(size=24, color='black', family='Arial Black')),
+                xaxis_title='Date',
+                yaxis=dict(title='Monthly Rainfall (mm)', titlefont=dict(color='lightblue', size=18, family='Arial Black'), tickfont=dict(color='lightblue'), side='right'),
+                yaxis2=dict(title='Depth Below Ground (m)', titlefont=dict(color='black', size=18, family='Arial Black'), tickfont=dict(color='black'), side='left', overlaying='y', tickvals=depth_ticks, tickformat=".2f"),
+                yaxis3=dict(title='Water Elevation (m AHD)', titlefont=dict(color='blue', size=18, family='Arial Black'), tickfont=dict(color='blue'), anchor='free', overlaying='y', side='left', autoshift=True, shift = -60, position=0, showline=True, tickvals=elevation_ticks, tickformat=".2f"),
+                width=1400,
+                height=600,
+                legend=dict(x=0.01, y=0.99, bgcolor='rgba(193, 223, 222, 0.331)', bordercolor='rgba(0,0,0,0)'),
+                plot_bgcolor='white',
+                paper_bgcolor='white',
+                margin=dict(l=150, r=150, t=80, b=80),
+                shapes=[
+                    dict(
+                        type='rect',
+                        xref='paper',
+                        yref='paper',
+                        x0=0,
+                        y0=0,
+                        x1=1,
+                        y1=1,
+                        line=dict(
+                            color='black',
+                            width=2
+                        )
+                    )
+                ]
+            )
+                
+            # Update title and axis font size, remove inside axis lines
+            fig.update_layout(
+                title=dict(font=dict(size=24, color='black', family='Arial Black')),
+                xaxis=dict(tickfont=dict(size=16), showgrid=True, zeroline=True),
+                yaxis=dict(titlefont=dict(size=18, family='Arial Black'), tickfont=dict(size=16), showgrid=True, zeroline=True),
+                yaxis2=dict(titlefont=dict(size=18, family='Arial Black'), tickfont=dict(size=16), showgrid=True, zeroline=True),
+                yaxis3=dict(titlefont=dict(size=18, family='Arial Black'), tickfont=dict(size=16), showgrid=True, zeroline=True)
+            )
+                
+            # Show the plot
+            fig.show()
